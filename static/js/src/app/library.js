@@ -1,0 +1,348 @@
+var library = {}
+
+$( document ).ready(function() {
+
+    $('body').on('click','img',function(){
+        url = $(this).attr('src')
+        base = url.substr(0,url.lastIndexOf('/')+1)
+        
+        imgname = url.split("/")[url.split("/").length-1]
+        if ( imgname == 'email.png'){
+            $(this).attr('src', base + 'landing.png'); 
+        } else if ( imgname == 'landing.png') {
+            $(this).attr('src', base + 'email.png');
+        }    
+    }) 
+});
+
+function dismiss() {
+    $("#name").val("")
+    $("#modal\\.flashes").empty()
+}
+
+async function test(name){
+    item = library[name]
+
+    const { value: formValues } = await Swal.fire({
+        type: "info",
+        title: "Test " + name + " Campaign",
+        showCancelButton: true,
+        confirmButtonText: "Send!",
+        reverseButtons: true,     
+        allowOutsideClick: false,   
+        html:
+          '<input id="swal-email" class="swal2-input" placeholder="Email address to send the campaign to">' +
+          '<input id="swal-listener" class="swal2-input" placeholder="GoPhish listener URL">',
+        focusConfirm: false,
+        preConfirm: () => {
+            email = document.getElementById('swal-email').value
+            listener = document.getElementById('swal-listener').value
+            if ( !(/^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+\.[a-zA-Z0-9-]{2,24}$/.test(email)) ) { //Emai validation taken from swal code
+                Swal.showValidationMessage('Please enter a valid email address')
+            } else if (listener == ""){
+                Swal.showValidationMessage('Please enter a GoPhish listener URL')
+            }
+          return [
+            email,listener
+          ]
+        }
+      })
+      
+      if (formValues) {
+          //Create a temporary group with the email, send campaign, delete group, link to campaign url
+          email = formValues[0]
+          listener = formValues[1]
+          rnd = Math.floor(Math.random() * (+9999 - +1000)) + +1000;
+          groupname = "_testCampaignGroup" + rnd
+          campaignname = "Test " + name + " Campaign-" + rnd
+          group = {"name":groupname,"targets":[{"first_name":"Bobby","last_name":"Phisher","email":formValues[0],"position":"Space Janitor"}]}
+          console.log(group)
+          api.groups.post(group)
+          .success(function (data) {
+                groupid = data.id
+                //Next make campaign
+                campaign = {  
+                    "name": campaignname,
+                    "template":{  "name": name},
+                    "url":listener,
+                    "page":{"name":name},
+                    "smtp":{"name":name},
+                    "groups":[{"name":groupname}]
+                }
+                api.campaigns.post(campaign)
+                .success(function (data) {
+                    //Delete temp group
+                    api.groupId.delete(groupid)
+                    .success(function (msg) {
+                        //All good
+                    })
+                    .error(function (data) {
+                        console.log(data.responseJSON.message)
+                    })
+                    Swal.fire({type:"success", title:"Test campaign sent!"})
+                })
+                .error(function (data) {
+                    Swal.fire("Error: " + data.responseJSON.message)
+                })
+
+                
+          })//end success
+          .error(function (data) {
+              Swal.fire("Error: " + data.responseJSON.message)
+          })
+      }
+}
+
+function launch(name) {
+    item = library[name]
+    console.log(item)
+    console.log(name)
+
+    //Get Targets
+    console.log("Getting targets")
+    var targets = {}
+    api.groups.get()
+    .success(function (groups) {
+        if (groups.length == 0) {
+            console.log("No groups found")
+            return false;
+        } else {
+            $.map(groups, function (obj) {
+                targets[obj.name] = obj.name;
+            });
+        }
+    }) .error(function () {
+        $("#loading").hide()
+        errorFlash("Error fetching targets")
+    })
+
+    //Get campaign names
+    api.campaigns.summary()
+    .success(function (data) {
+
+        campaigns={}
+        $.each(data.campaigns, function( index, value ) {
+            campaigns[value.name] = value.name
+          });
+        console.log(campaigns)
+
+
+    })
+    .error(function () {
+        $("#loading").hide()
+        errorFlash("Error fetching campaigns")
+    })
+    
+    Swal.mixin({
+        input: 'text',
+        confirmButtonText: 'Next &rarr;',
+        showCancelButton: true,
+        reverseButtons: true,
+        allowOutsideClick: false,
+
+        progressSteps: ['1', '2', '3'] 
+      }).queue([
+         
+          {
+          title: name + " Campaign Wizard",
+          // html: '<img width=200 src="/endpoint/library/'+name+'/landing.png" alt="Landing Page"><p>You\'ve selected the '+ name +' campaign.  ',
+          html: "You've selected the " + name + " template. Good choice! This wizard will help you launch a campaign in a few easy steps. Let's start with a name:",
+          inputPlaceholder: "Give your campaign a name.",
+          inputValidator: (value) => {
+            if (!value) {
+              return 'Campaign name cannot be blank!'
+            }
+            if (value in campaigns) {
+                console.log(value)
+                return "Name " + value + " is already taken!"
+            }
+          }
+        },
+        {
+            title: "Target Selection",
+            html: "Great campaign name! Next up, let's select a target group. If you'd like to create a new target group click <a href='groups' target='_blank'>here.</a>",
+            input: 'select',
+            inputOptions: targets,
+            inputPlaceholder: 'Select a target',
+            inputValidator: (value) => {
+                if (!value) {
+                  return 'Please select a target'
+                }
+            }
+        },
+        {
+        title: "GoPhish Listener",
+        //input: "url",
+        html: "Finally, enter the address of your GoPhish listener. It must be accessible by your targets!",
+        inputPlaceholder: "GoPhish listener",
+        inputValidator: (value) => {
+            if (!value) {
+              return 'Listener cannot be blank!'
+            }
+        }
+        },
+
+      ]).then((result) => {
+        if (result.value) {
+            console.log("Result:")
+            console.log(result.value)
+            campaignName = result.value[0]
+            campaignTargets = result.value[1]
+            campaignListener = result.value[2]
+
+            campaign = {  
+                        "name": campaignName,
+                        "template":{  
+                        "name": name
+                        },
+                        "url":campaignListener,
+                        "page":{  
+                        "name":name
+                        },
+                        "smtp":{  
+                        "name":name
+                        },
+                        "groups":[  
+                        {  
+                            "name":campaignTargets
+                        }
+                        ]
+                    }
+
+            Swal.fire({
+                type: "question",
+                title: 'Are you sure',
+                html:'This will schedule the campaign to be launched.',
+                confirmButtonText: 'Launch',
+                showCancelButton: true,
+                reverseButtons: true,
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return new Promise(function (resolve, reject) {
+                        // Submit the campaign
+                        
+                        api.campaigns.post(campaign)
+                            .success(function (data) {
+                                resolve()
+                                campaign = data
+                            })
+                            .error(function (data) {
+                                Swal.fire("Error: " + data.responseJSON.message)
+                            })
+                    })
+                }
+            }).then(function (result) {
+                if (result.value){
+                    Swal.fire(
+                        'Campaign Scheduled!',
+                        'This campaign has been scheduled for launch!',
+                        'success'
+                    );
+                }
+                $('button:contains("OK")').on('click', function () {
+                    window.location = "/campaigns/" + campaign.id.toString()
+                })
+            })
+        }// if result
+      })
+}
+
+function load() {
+    $("#emptyMessage").hide()
+    $("#loading").show()
+    api.templates.get()
+    .success(function (ts) {
+        templates = ts
+        var pages;
+        var profiles;
+        var templates;
+        //library = {}
+        api.SMTP.get()
+            .success(function (ss) {
+                profiles = ss
+
+                api.pages.get()
+                    .success(function (ps) {
+                        pages = ps
+                        //From here we have pages, profiles, and templates.
+                        if (templates.length > 0 && profiles.length >0 && pages.length > 0) {
+                            //Check for same name in all three by calculating the intersection of names
+                            var a=[]; var b=[];var c=[];
+                            teDict={}; prDict={}; paDict={};
+                            $.each(templates, function (i, template) {
+                                a.push(template.name)
+                                teDict[template.name]=template
+                            })
+                            $.each(profiles, function (i, profile) {
+                                b.push(profile.name)
+                                prDict[profile.name]=profile
+                            })
+                            $.each(pages, function (i, page) {
+                                c.push(page.name)
+                                paDict[page.name]=page
+                            })
+                            data = [a, b, c]
+                            intersection = data.reduce((x, y) => x.filter(z => y.includes(z)));
+                            console.log(intersection)
+                            if (intersection.length <1 ){
+                                $("#loading").hide()
+                                $("#emptyMessage").show()
+                                return
+                            }
+                            //Build library
+                            $.each(intersection, function (i, item) {
+                                library[item] = {
+                                                    "template": teDict[item],
+                                                    "profile": prDict[item],
+                                                    "page": paDict[item]
+                                                }
+                            })
+                            //Begin load table
+                            $("#loading").hide()
+                            $("#emptyMessage").hide()
+                            
+                            //Iterate over library items. Mod 3 and drop a new row.
+                            libhtml = '<div class="row">'
+                            //for (i = 0; i < 6; i++    ) { //For testing, bulk up the number of sims
+                                $.each(library, function (name, item){
+    
+                                    libhtml +=
+                                    '<div class="col-md-4">\
+                                        <div class="panel panel-default">\
+                                            <div class="panel-heading">'+ name +'</div>\
+                                            <img id="img1" class="img-responsive" tooltip="Landing page" src="/endpoint/library/' + name + '/landing.png" id="Panel_Image">\
+                                            <div class="panel-footer" align="right">\
+                                                <button class="btn-sm btn-default" onclick="test(\'' + name + '\')"><i class="fa fa-envelope"></i> Test</button>\
+                                                <button class="btn-sm btn-primary" onclick="launch(\'' + name + '\')"><i class="fa fa-envelope"></i> Launch</button>\
+                                            </div>\
+                                        </div>\
+                                    </div>'
+                                })//end iterate over library
+                            //}//for testing
+                            libhtml += "</div>" // Close row
+                            $("#librarycontainer").html(libhtml)
+
+                        } else {
+                            $("#loading").hide()
+                            console.log("No library items available.")
+                        }
+                    })
+                    .error(function () {
+                        $("#loading").hide()
+                        errorFlash("Error fetching pages")
+                    })
+            })
+            .error(function () {
+                $("#loading").hide()
+                errorFlash("Error fetching profiles")
+            })
+    })
+    .error(function () {
+        $("#loading").hide()
+        errorFlash("Error fetching templates")
+    })
+}
+
+$(document).ready(function () {
+    load()
+});

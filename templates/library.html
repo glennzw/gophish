@@ -1,0 +1,27 @@
+{{define "body"}}
+
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="row">
+        <h1 class="page-header">
+            Library
+        </h1>
+    </div>
+    <div id="flashes" class="row"></div>
+
+    &nbsp;
+    <div id="loading">
+        <i class="fa fa-spinner fa-spin fa-4x"></i>
+    </div>
+    <div id="emptyMessage" class="row" style="display:none;">
+        <div class="alert alert-info">
+            No items in the library! Create an <a href="/templates">email template</a>, <a href="landing_pages">landing page</a>, and <a href="sending_profiles">sending profile</a> with the same name for it to appear here. Also, add screenshot files of your landing page <code>(landing.png)</code> and email <code>(email.png)</code> to <code>static\endpoint\library\name\</code>, ensuring the images are in a square format (same height and width).
+        </div>
+    </div>
+
+    <div  id ="librarycontainer"></div>
+
+
+</div>
+{{end}} {{define "scripts"}}
+<script src="/js/dist/app/library.min.js"></script>
+{{end}}
