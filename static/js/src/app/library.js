@@ -324,6 +324,7 @@ function load() {
 
                         } else {
                             $("#loading").hide()
+                            $("#emptyMessage").show()
                             console.log("No library items available.")
                         }
                     })
