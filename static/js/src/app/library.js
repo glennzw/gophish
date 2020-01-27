@@ -71,17 +71,8 @@ async function test(name){
                 }
                 api.campaigns.post(campaign)
                 .success(function (data) {
-                    //Delete temp group. Include a due to crash condition
-                    setTimeout(() => {
-                        api.groupId.delete(groupid)
-                        .success(function (msg) {
-                            //All good
-                        })
-                        .error(function (data) {
-                            console.log(data.responseJSON.message)
-                        })
-                    }, 2000);
                     Swal.fire({type:"success", title:"Test campaign sent!"})
+                    deleteTempCampaign(groupid) //Delete temp group.
                 })
                 .error(function (data) {
                     Swal.fire("Error: " + data.responseJSON.message)
@@ -93,6 +84,28 @@ async function test(name){
               Swal.fire("Error: " + data.responseJSON.message)
           })
       }
+}
+
+function deleteTempCampaign(groupid) {
+
+    (function checkCamp (i) {          
+        setTimeout(function () {     
+         api.campaignId.results(groupid) //Check if campaign has finished
+             .success(function (c) {
+                 x = c;
+                 if ("results" in c && c.results.length > 0 && "status" in c.results[0] && c.results[0].status == "Email Sent"){
+                     console.log("Deleting temporary group")
+                     api.groupId.delete(groupid) // Email has been sent, delete the group.
+                     i=0
+                     console.log(i)  
+                 } else {
+                     console.log("Email not yet sent, sleeping")
+                     if (--i) checkCamp(i);
+                 }
+             })
+        }, 1000)
+     })(20);    // Check 20 times, with 1 second delays
+ 
 }
 
 function launch(name) {
