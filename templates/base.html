@@ -66,6 +66,14 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/js/dist/vendor.min.js"></script>
     <script src="/js/dist/app/gophish.min.js"></script>
+    <script>
+    $(document).ready(function(){ // This should be moved to gophish.js
+        $(".advanced").hide();
+        $(".navbar-logo").dblclick(function(){
+            $(".advanced").toggle();
+        });
+    });
+    </script>
     {{template "scripts" .}}
 </body>
 
