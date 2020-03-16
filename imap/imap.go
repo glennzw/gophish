@@ -13,6 +13,8 @@ import (
 	"github.com/gophish/gophish/models"
 	"github.com/jordan-wright/email"
 	"github.com/mxk/go-imap/imap"
+	"mime/quotedprintable"
+	"io/ioutil"
 )
 
 // Client interface for IMAP interactions
@@ -343,6 +345,26 @@ func NewEmail(msgFields imap.FieldMap) (Email, error) {
 	if err != nil {
 		return Email{}, err
 	}
+
+	encoding := em.Headers.Get("Content-Transfer-Encoding")
+	if encoding == "quoted-printable" {
+		//First decode the HTML
+		qp := quotedprintable.NewReader(bytes.NewReader(em.HTML))
+		body, err := ioutil.ReadAll(qp) // body now contains the decoded body
+		if err != nil {
+			return Email{}, err
+		}
+		em.HTML = body
+
+		//Then decode the text
+		qp = quotedprintable.NewReader(bytes.NewReader(em.Text))
+		body, err = ioutil.ReadAll(qp) // body now contains the decoded body
+		if err != nil {
+			return Email{}, err
+		}
+		em.Text = body
+	}
+
 	iem := Email{
 		Email: em,
 		UID:   imap.AsNumber(msgFields["UID"]),
