@@ -171,7 +171,9 @@ func (mbox *Mailbox) newClient() (*imap.Client, error) {
 	var client *imap.Client
 	var err error
 	if mbox.TLS {
-		client, err = imap.DialTLS(mbox.Host, new(tls.Config))
+		config := new(tls.Config)
+        config.InsecureSkipVerify = true
+        client, err = imap.DialTLS(mbox.Host, config)
 		if err != nil {
 			return client, err
 		}
