@@ -195,6 +195,20 @@ func setupCampaignDependencies(b *testing.B, size int) {
 	}
 }
 
+// setupCampaign sets up the campaign dependencies as well as posting the
+// actual campaign
+func setupCampaign(b *testing.B, size int) Campaign {
+	setupCampaignDependencies(b, size)
+	campaign := Campaign{Name: "Test campaign"}
+	campaign.UserId = 1
+	campaign.Template = Template{Name: "Test Template"}
+	campaign.Page = Page{Name: "Test Page"}
+	campaign.SMTP = SMTP{Name: "Test Page"}
+	campaign.Groups = []Group{Group{Name: "Test Group"}}
+	PostCampaign(&campaign, 1)
+	return campaign
+}
+
 func BenchmarkCampaign100(b *testing.B) {
 	setupBenchmark(b)
 	setupCampaignDependencies(b, 100)
@@ -266,6 +280,58 @@ func BenchmarkCampaign10000(b *testing.B) {
 		db.Delete(Result{})
 		db.Delete(MailLog{})
 		db.Delete(Campaign{})
+	}
+	tearDownBenchmark(b)
+}
+
+func BenchmarkGetCampaign100(b *testing.B) {
+	setupBenchmark(b)
+	campaign := setupCampaign(b, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := GetCampaign(campaign.Id, campaign.UserId)
+		if err != nil {
+			b.Fatalf("error getting campaign: %v", err)
+		}
+	}
+	tearDownBenchmark(b)
+}
+
+func BenchmarkGetCampaign1000(b *testing.B) {
+	setupBenchmark(b)
+	campaign := setupCampaign(b, 1000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := GetCampaign(campaign.Id, campaign.UserId)
+		if err != nil {
+			b.Fatalf("error getting campaign: %v", err)
+		}
+	}
+	tearDownBenchmark(b)
+}
+
+func BenchmarkGetCampaign5000(b *testing.B) {
+	setupBenchmark(b)
+	campaign := setupCampaign(b, 5000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := GetCampaign(campaign.Id, campaign.UserId)
+		if err != nil {
+			b.Fatalf("error getting campaign: %v", err)
+		}
+	}
+	tearDownBenchmark(b)
+}
+
+func BenchmarkGetCampaign10000(b *testing.B) {
+	setupBenchmark(b)
+	campaign := setupCampaign(b, 10000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := GetCampaign(campaign.Id, campaign.UserId)
+		if err != nil {
+			b.Fatalf("error getting campaign: %v", err)
+		}
 	}
 	tearDownBenchmark(b)
 }
