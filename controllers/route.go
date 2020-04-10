@@ -131,6 +131,8 @@ func (as *AdminServer) registerRoutes() {
 	router.HandleFunc("/users", mid.Use(as.UserManagement, mid.RequirePermission(models.PermissionModifySystem), mid.RequireLogin))
 	router.HandleFunc("/webhooks", mid.Use(as.Webhooks, mid.RequirePermission(models.PermissionModifySystem), mid.RequireLogin))
 	router.HandleFunc("/library", mid.Use(as.Library, mid.RequireLogin))
+	router.HandleFunc("/training", mid.Use(as.Training, mid.RequireLogin))
+	router.HandleFunc("/reported", mid.Use(as.Reported, mid.RequireLogin))
 	// Create the API routes
 	api := api.NewServer(api.WithWorker(as.worker))
 	router.PathPrefix("/api/").Handler(api)
@@ -272,6 +274,20 @@ func (as *AdminServer) Library(w http.ResponseWriter, r *http.Request) {
 	params := newTemplateParams(r)
 	params.Title = "Library"
 	getTemplate(w, "library").ExecuteTemplate(w, "base", params)
+}
+
+// Training handles displaying phishing training
+func (as *AdminServer) Training(w http.ResponseWriter, r *http.Request) {
+	params := newTemplateParams(r)
+	params.Title = "Training"
+	getTemplate(w, "training").ExecuteTemplate(w, "base", params)
+}
+
+// Reported handles displaying user reported emails that weren't gophish campaigns
+func (as *AdminServer) Reported(w http.ResponseWriter, r *http.Request) {
+	params := newTemplateParams(r)
+	params.Title = "Reported Emails"
+	getTemplate(w, "reported").ExecuteTemplate(w, "base", params)
 }
 
 // Login handles the authentication flow for a user. If credentials are valid,
