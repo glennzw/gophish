@@ -81,6 +81,10 @@ func (mw *MailWorker) Start(ctx context.Context) {
 			return
 		case ms := <-mw.queue:
 			go func(ctx context.Context, ms []Mail) {
+				if len(ms) < 1 {
+				    fmt.Println("Warning, ms is empty")
+				    return
+				}
 				dialer, err := ms[0].GetDialer()
 				if err != nil {
 					errorMail(err, ms)
