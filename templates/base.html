@@ -68,9 +68,22 @@
     <script src="/js/dist/app/gophish.min.js"></script>
     <script>
     $(document).ready(function(){ // This should be moved to gophish.js
-        $(".advanced").hide();
+        var iddqd = localStorage.getItem('gophish.iddqd')
+        var extramenu = '<li><a href="/campaigns">Campaigns</a></li><li><a href="/templates">Email Templates</a></li><li><a href="/landing_pages">Landing Pages</a></li><li><a href="/sending_profiles">Sending Profiles</a></li>'
+        if (iddqd == "true") {
+            $("#iddqd").html(extramenu)
+        }
+
         $(".navbar-logo").dblclick(function(){
-            $(".advanced").toggle();
+            // Toggle advanced menu
+            var iddqd = localStorage.getItem('gophish.iddqd')
+            if (iddqd == "true") {
+                localStorage.setItem('gophish.iddqd', "false")
+                $("#iddqd").html('')
+            } else {
+                localStorage.setItem('gophish.iddqd', "true")
+                $("#iddqd").html(extramenu)
+            }
         });
     });
     </script>
