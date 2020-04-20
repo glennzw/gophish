@@ -72,6 +72,8 @@
         var extramenu = '<li><a href="/campaigns">Campaigns</a></li><li><a href="/templates">Email Templates</a></li><li><a href="/landing_pages">Landing Pages</a></li><li><a href="/sending_profiles">Sending Profiles</a></li>'
         if (iddqd == "true") {
             $("#iddqd").html(extramenu)
+        } else {
+            $("#iddqd").html('') // Should be redundant
         }
 
         $(".navbar-logo").dblclick(function(){
