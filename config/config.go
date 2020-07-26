@@ -2,8 +2,9 @@ package config
 
 import (
 	"encoding/json"
-	log "github.com/gophish/gophish/logger"
 	"io/ioutil"
+
+	log "github.com/gophish/gophish/logger"
 )
 
 // AdminServer represents the Admin server configuration details
@@ -12,6 +13,7 @@ type AdminServer struct {
 	UseTLS    bool   `json:"use_tls"`
 	CertPath  string `json:"cert_path"`
 	KeyPath   string `json:"key_path"`
+	CSRFKey   string `json:"csrf_key"`
 }
 
 // PhishServer represents the Phish server configuration details
@@ -52,6 +54,9 @@ func LoadConfig(filepath string) (*Config, error) {
 	err = json.Unmarshal(configFile, config)
 	if err != nil {
 		return nil, err
+	}
+	if config.Logging == nil {
+		config.Logging = &log.Config{}
 	}
 	// Choosing the migrations directory based on the database used.
 	config.MigrationsPath = config.MigrationsPath + config.DBName
