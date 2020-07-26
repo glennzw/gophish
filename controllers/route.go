@@ -351,6 +351,8 @@ func (as *AdminServer) Reported(w http.ResponseWriter, r *http.Request) {
 	params := newTemplateParams(r)
 	params.Title = "Reported Emails"
 	getTemplate(w, "reported").ExecuteTemplate(w, "base", params)
+}
+
 // Impersonate allows an admin to login to a user account without needing the password
 func (as *AdminServer) Impersonate(w http.ResponseWriter, r *http.Request) {
 
