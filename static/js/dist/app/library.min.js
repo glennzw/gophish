@@ -302,6 +302,10 @@ function load() {
                                                     "page": paDict[item]
                                                 }
                             })
+
+                            // Sorted array of library names (since we can't sort a dictionary)
+                            libraryNames = Object.keys(library).sort();
+
                             //Begin load table
                             $("#loading").hide()
                             $("#emptyMessage").hide()
@@ -309,7 +313,7 @@ function load() {
                             //Iterate over library items. Mod 3 and drop a new row.
                             libhtml = '<div class="row">'
                             //for (i = 0; i < 6; i++    ) { //For testing, bulk up the number of sims
-                                $.each(library, function (name, item){
+                                $.each(libraryNames, function (index, name){
     
                                     libhtml +=
                                     '<div class="col-md-4">\
