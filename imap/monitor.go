@@ -21,8 +21,10 @@ import (
 	"github.com/gophish/gophish/models"
 )
 
-// Pattern for GoPhish emails e.g ?rid=AbC123
-var goPhishRegex = regexp.MustCompile("(\\?rid=(3D)?([A-Za-z0-9]{7}))") // We include the optional quoted-printable 3D at the front, just in case decoding fails
+// Pattern for GoPhish emails e.g ?rid=AbC1234
+// We include the optional quoted-printable 3D at the front, just in case decoding fails. e.g ?rid=3DAbC1234
+// We also include alternative URL encoded representations of '=' and '?' to handle Microsoft ATP URLs e.g %3Frid%3DAbC1234
+var goPhishRegex = regexp.MustCompile("((\\?|%3F)rid(=|%3D)(3D)?([A-Za-z0-9]{7}))")
 
 // Monitor is a worker that monitors IMAP servers for reported campaign emails
 type Monitor struct {
@@ -118,11 +120,13 @@ func (im *Monitor) Shutdown() error {
 func checkForNewEmails(im models.IMAP) {
 	im.Host = im.Host + ":" + strconv.Itoa(int(im.Port)) // Append port
 	mailServer := Mailbox{
-		Host:   im.Host,
-		TLS:    im.TLS,
-		User:   im.Username,
-		Pwd:    im.Password,
-		Folder: im.Folder}
+		Host:             im.Host,
+		TLS:              im.TLS,
+		IgnoreCertErrors: im.IgnoreCertErrors,
+		User:             im.Username,
+		Pwd:              im.Password,
+		Folder:           im.Folder,
+	}
 
 	msgs, err := mailServer.GetUnread(true, false)
 	if err != nil {

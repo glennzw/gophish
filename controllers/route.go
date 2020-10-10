@@ -158,7 +158,7 @@ func (as *AdminServer) registerRoutes() {
 		csrf.FieldName("csrf_token"),
 		csrf.Secure(as.config.UseTLS))
 	adminHandler := csrfHandler(router)
-	adminHandler = mid.Use(adminHandler.ServeHTTP, mid.CSRFExceptions, mid.GetContext)
+	adminHandler = mid.Use(adminHandler.ServeHTTP, mid.CSRFExceptions, mid.GetContext, mid.ApplySecurityHeaders)
 
 	// Setup GZIP compression
 	gzipWrapper, _ := gziphandler.NewGzipLevelHandler(gzip.BestCompression)
@@ -406,6 +406,11 @@ func (as *AdminServer) Login(w http.ResponseWriter, r *http.Request) {
 			log.Error(err)
 			as.handleInvalidLogin(w, r)
 			return
+		}
+		u.LastLogin = time.Now().UTC()
+		err = models.PutUser(&u)
+		if err != nil {
+			log.Error(err)
 		}
 		// If we've logged in, save the session and redirect to the dashboard
 		session.Values["id"] = u.Id
